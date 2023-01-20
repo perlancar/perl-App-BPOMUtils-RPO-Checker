@@ -23,7 +23,7 @@ $SPEC{':package'} = {
     summary => 'Various checker utilities to help with Processed Food Registration (RPO - Registrasi Pangan Olahan) at BPOM',
 };
 
-$SPEC{bpom_bpo_check_label_design} = {
+$SPEC{bpom_rpo_check_label_design} = {
     v => 1.1,
     summary => 'Check label design files',
     description => <<'_',
@@ -38,36 +38,46 @@ Here's what it checks:
 
 _
     args => {
-        files => [
-            schema => ['array*', of=>'filename', 'x.perl.default_value_rules' => [['Path::filienames']]],
-            req => 1,
-        ],
+        files => {
+            schema => ['array*', of=>'filename', 'x.perl.default_value_rules' => [['Path::filenames']]],
+        },
     },
 };
-sub bpom_bpo_check_label_design {
+sub bpom_rpo_check_label_design {
     require File::MimeInfo::Magic;
+    require Image::Size;
 
     my %args = @_;
 
     my $i = 0;
     my @errors;
+    my @warnings;
     for my $file (@{ $args{files} }) {
         $i++;
         log_info "[%d/%d] Processing file %s ...", $i, scalar(@{ $args{files} }), $file;
-        if ($file =~ /\.jpe?g\z/i) {
+        unless ($file =~ /\.jpe?g\z/i) {
             push @errors, {file=>$file, message=>"Filename does not end in .JPG or .JPEG"};
         }
         if (!-r($file)) {
             push @errors, {file=>$file, message=>"File cannot be read"};
             next;
         }
-        my $mime_type = File::MimeInfo::Magic::mimetype($file);
+
+        # because File::MimeInfo::Magic will report mime='inode/symlink' for symlink
+        my $realfile = -l $file ? readlink($file) : $file;
+        my $mime_type = File::MimeInfo::Magic::mimetype($realfile);
         unless ($mime_type eq 'image/jpeg') {
-            push @errors, {file=>$file, message=>"File not in JPEG format"};
+            push @errors, {file=>$file, message=>"File not in JPEG format (MIME=$mime_type)"};
         }
+
+        my ($size_x, $size_y) = Image::Size::imgsize($file);
+        if ($size_x > 2300) { push @errors, {file=>$file, message=>"x too large ($size_x), max 2300 px"} }
+        if ($size_y > 2300) { push @errors, {file=>$file, message=>"y too large ($size_y), max 2300 px"} }
+        if ($size_x < 600) { push @warnings, {file=>$file, message=>"WARNING: x too small ($size_x), should be 600+ px"} }
+        if ($size_y < 600) { push @warnings, {file=>$file, message=>"WARNING: y too small ($size_y), should be 600+ px"} }
     }
 
-    [200, "OK", \@errors, {'cmdline.exit_code'=>@errors ? 1:0}];
+    [200, "OK", [@errors, @warnings], {'cmdline.exit_code'=>@errors ? 1:0}];
 }
 
 1;
