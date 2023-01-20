@@ -40,6 +40,8 @@ _
     args => {
         files => {
             schema => ['array*', of=>'filename', 'x.perl.default_value_rules' => [['Path::filenames']]],
+            pos => 0,
+            slurpy => 1,
         },
     },
 };
