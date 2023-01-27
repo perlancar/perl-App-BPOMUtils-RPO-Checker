@@ -57,12 +57,23 @@ sub bpom_rpo_check_label_design {
     for my $file (@{ $args{files} }) {
         $i++;
         log_info "[%d/%d] Processing file %s ...", $i, scalar(@{ $args{files} }), $file;
+        unless (-f $file) {
+            push @errors, {file=>$file, message=>"File not found or not a regular file"};
+            next;
+        }
         unless ($file =~ /\.jpe?g\z/i) {
             push @errors, {file=>$file, message=>"Filename does not end in .JPG or .JPEG"};
         }
         if (!-r($file)) {
             push @errors, {file=>$file, message=>"File cannot be read"};
             next;
+        }
+
+        my $filesize = -s $file;
+        if ($filesize < 100*1024) {
+            push @warnings, {file=>$file, message=>"File size very small (<100k), perhaps increase quality?"};
+        } elsif ($filesize > 5*1024*1024) {
+            push @errors, {file=>$file, message=>"File size too large (>5M)"};
         }
 
         # because File::MimeInfo::Magic will report mime='inode/symlink' for symlink
