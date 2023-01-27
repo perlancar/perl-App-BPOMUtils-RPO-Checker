@@ -1,3 +1,9 @@
+0.003   2023-01-27  Released-By: PERLANCAR; Urgency: medium
+
+        - [ux][cli bpom-rpo-check-label-design] By default set log level to
+          'info'.
+
+
 0.002   2023-01-20  Released-By: PERLANCAR; Urgency: low
 
         - Tweak Rinci metadata.
