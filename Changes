@@ -1,3 +1,8 @@
+0.004   2023-01-27  Released-By: PERLANCAR; Urgency: medium
+
+        - Check file size.
+
+
 0.003   2023-01-27  Released-By: PERLANCAR; Urgency: medium
 
         - [ux][cli bpom-rpo-check-label-design] By default set log level to
