@@ -1,3 +1,13 @@
+0.005   2023-02-11  Released-By: PERLANCAR; Urgency: medium
+
+        - [incompatible change] Rename
+          bpom-repo-check-{,files-}label-design.
+
+        - Add utility: bpom-rpo-check-files.
+
+        - Add check: multiple dots & symbols in filename.
+
+
 0.004   2023-01-27  Released-By: PERLANCAR; Urgency: medium
 
         - Check file size.
