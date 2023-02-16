@@ -1,3 +1,8 @@
+0.006   2023-02-16  Released-By: PERLANCAR; Urgency: medium
+
+        - images must be *smaller* than 2300x2300, not smaller or equal to.
+
+
 0.005   2023-02-11  Released-By: PERLANCAR; Urgency: medium
 
         - [incompatible change] Rename
