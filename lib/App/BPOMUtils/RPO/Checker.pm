@@ -91,7 +91,7 @@ Here's what it checks:
 - filename should not contain unsafe symbols
 - file must not be larger than 5MB
 - file must be readable
-- image size must not be larger than 2300 x 2300 px
+- image size must be smaller than 2300 x 2300 px
 - (WARNING) image should not be smaller than 600 x 600 px
 
 _
@@ -150,8 +150,8 @@ sub bpom_rpo_check_files_label_design {
         }
 
         my ($size_x, $size_y) = Image::Size::imgsize($file);
-        if ($size_x > 2300) { push @errors, {file=>$file, message=>"x too large ($size_x), max 2300 px"} }
-        if ($size_y > 2300) { push @errors, {file=>$file, message=>"y too large ($size_y), max 2300 px"} }
+        if ($size_x >= 2300) { push @errors, {file=>$file, message=>"x too large ($size_x), xmax 2300 px"} }
+        if ($size_y >= 2300) { push @errors, {file=>$file, message=>"y too large ($size_y), xmax 2300 px"} }
         if ($size_x < 600) { push @warnings, {file=>$file, message=>"WARNING: x too small ($size_x), should be 600+ px"} }
         if ($size_y < 600) { push @warnings, {file=>$file, message=>"WARNING: y too small ($size_y), should be 600+ px"} }
     }
