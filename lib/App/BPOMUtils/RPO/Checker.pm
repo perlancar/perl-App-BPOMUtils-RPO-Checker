@@ -45,11 +45,15 @@ _
     },
 };
 sub bpom_rpo_check_files {
+    require Cwd;
+
     my %args = @_;
 
     my $i = 0;
     my @errors;
     my @warnings;
+    my %symlinks; # key=abspath of symlink target, val=(first) link filename
+
     for my $file (@{ $args{files} }) {
         $i++;
         log_info "[%d/%d] Processing file %s ...", $i, scalar(@{ $args{files} }), $file
@@ -71,11 +75,30 @@ sub bpom_rpo_check_files {
             next;
         }
 
+      CHECK_SYMLINK_TARGET: {
+            if (-l $file) {
+                my $abs_target = Cwd::abs_path(readlink $file);
+                log_trace "Symlink target: %s", $abs_target;
+                unless ($abs_target) {
+                    push @errors, {file=>$file, message=>"Symlink target cannot be made absolute"}; # should not happen if we already check -f $file
+                    next CHECK_SYMLINK_TARGET;
+                }
+                if (defined $symlinks{$abs_target}) {
+                    push @warnings, {file=>$file, message=>"WARNING: Targets to the same file ($abs_target) as link $symlinks{$abs_target}, probably not what we want"}; # should not happen if we already check -f $file
+                    next CHECK_SYMLINK_TARGET;
+                } else {
+                    $symlinks{$abs_target} = $file;
+                }
+            }
+        }
+
         my $filesize = -s $file;
         if ($filesize > 5*1024*1024) {
             push @errors, {file=>$file, message=>"File size too large (>5M)"};
         }
     }
+
+    #use DD; dd \%symlinks;
 
     [200, "OK", [@errors, @warnings], {'cmdline.exit_code'=>@errors ? 1:0}];
 }
