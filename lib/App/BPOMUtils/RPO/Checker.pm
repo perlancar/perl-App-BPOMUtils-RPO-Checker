@@ -52,7 +52,8 @@ sub bpom_rpo_check_files {
     my @warnings;
     for my $file (@{ $args{files} }) {
         $i++;
-        log_info "[%d/%d] Processing file %s ...", $i, scalar(@{ $args{files} }), $file;
+        log_info "[%d/%d] Processing file %s ...", $i, scalar(@{ $args{files} }), $file
+            unless $args{_no_log};
         unless (-f $file) {
             push @errors, {file=>$file, message=>"File not found or not a regular file"};
             next;
@@ -87,12 +88,10 @@ $SPEC{bpom_rpo_check_files_label_design} = {
 By default will check all files in the current directory, recursively.
 
 Here's what it checks:
+- all the checks by bpom_rpo_check_files()
 - file must be in JPEG format and has name ending in /\.jpe?g$/i
-- filename should not contain unsafe symbols
-- file must not be larger than 5MB
-- file must be readable
 - image size must be smaller than 2300 x 2300 px
-- (WARNING) image should not be smaller than 600 x 600 px
+- (WARNING) image should not be smaller than 600 x 600px
 
 _
     args => {
@@ -112,6 +111,14 @@ sub bpom_rpo_check_files_label_design {
     my $i = 0;
     my @errors;
     my @warnings;
+
+    my $checkf_res = bpom_rpo_check_files(files => $args{files}, _no_log=>1);
+    return [500, "Can't check files with bpom_rpo_check_files(): $checkf_res->[0] - $checkf_res->[1]"]
+        unless $checkf_res->[0] == 200;
+    #use DD; dd $checkf_res;
+    push @errors  , $_ for grep { !/^WARNING:/ } @{ $checkf_res->[2] };
+    push @warnings, $_ for grep {  /^WARNING:/ } @{ $checkf_res->[2] };
+
     for my $file (@{ $args{files} }) {
         $i++;
         log_info "[%d/%d] Processing file %s ...", $i, scalar(@{ $args{files} }), $file;
@@ -129,11 +136,7 @@ sub bpom_rpo_check_files_label_design {
         if ($file =~ /[^A-Za-z0-9 _.-]/) {
             push @warnings, {file=>$file, message=>"Filename contains symbols, should be avoided to ensure viewable in ereg-rba"};
         }
-
-        if (!-r($file)) {
-            push @errors, {file=>$file, message=>"File cannot be read"};
-            next;
-        }
+        next unless -r $file;
 
         my $filesize = -s $file;
         if ($filesize < 100*1024) {
