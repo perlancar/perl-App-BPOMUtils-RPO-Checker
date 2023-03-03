@@ -126,7 +126,7 @@ sub bpom_rpo_check_files_label_design {
         if ($file =~ /\.[^.]+\./) {
             push @errors, {file=>$file, message=>"Filename contains multiple dots, currently uploadable but not viewable in ereg-rba"};
         }
-        if ($file =~ /[^A-Za-z0-9_.-]/) {
+        if ($file =~ /[^A-Za-z0-9 _.-]/) {
             push @warnings, {file=>$file, message=>"Filename contains symbols, should be avoided to ensure viewable in ereg-rba"};
         }
 
