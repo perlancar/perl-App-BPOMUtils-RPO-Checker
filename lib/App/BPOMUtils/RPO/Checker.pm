@@ -34,6 +34,8 @@ Here's what it checks:
 - filename should not contain unsafe symbols
 - file must not be larger than 5MB
 - file must be readable
+- type of file must be PDF or image (JPG), other types will generate warnings
+- file's mime type and extension must match
 
 _
     args => {
@@ -46,6 +48,7 @@ _
 };
 sub bpom_rpo_check_files {
     require Cwd;
+    require File::MimeInfo::Magic;
 
     my %args = @_;
 
@@ -54,6 +57,7 @@ sub bpom_rpo_check_files {
     my @warnings;
     my %symlinks; # key=abspath of symlink target, val=(first) link filename
 
+  FILE:
     for my $file (@{ $args{files} }) {
         $i++;
         log_info "[%d/%d] Processing file %s ...", $i, scalar(@{ $args{files} }), $file
@@ -63,16 +67,20 @@ sub bpom_rpo_check_files {
             next;
         }
 
-        if ($file =~ /\.[^.]+\./) {
-            push @errors, {file=>$file, message=>"Filename contains multiple dots, currently uploadable but not viewable in ereg-rba"};
-        }
-        if ($file =~ /[^A-Za-z0-9 _.-]/) {
-            push @warnings, {file=>$file, message=>"Filename contains symbols, should be avoided to ensure viewable in ereg-rba"};
+      CHECK_FILENAME: {
+            if ($file =~ /\.[^.]+\./) {
+                push @errors, {file=>$file, message=>"Filename contains multiple dots, currently uploadable but not viewable in ereg-rba"};
+            }
+            if ($file =~ /[^A-Za-z0-9 _.-]/) {
+                push @warnings, {file=>$file, message=>"Filename contains symbols, should be avoided to ensure viewable in ereg-rba"};
+            }
         }
 
-        if (!-r($file)) {
-            push @errors, {file=>$file, message=>"File cannot be read"};
-            next;
+      CHECK_READABILITY: {
+            if (!-r($file)) {
+                push @errors, {file=>$file, message=>"File cannot be read"};
+                next FILE;
+            }
         }
 
       CHECK_SYMLINK_TARGET: {
@@ -81,21 +89,40 @@ sub bpom_rpo_check_files {
                 log_trace "Symlink target: %s", $abs_target;
                 unless ($abs_target) {
                     push @errors, {file=>$file, message=>"Symlink target cannot be made absolute"}; # should not happen if we already check -f $file
-                    next CHECK_SYMLINK_TARGET;
+                    next FILE;
                 }
                 if (defined $symlinks{$abs_target}) {
                     push @warnings, {file=>$file, message=>"WARNING: Targets to the same file ($abs_target) as link $symlinks{$abs_target}, probably not what we want"}; # should not happen if we already check -f $file
-                    next CHECK_SYMLINK_TARGET;
+                    next FILE;
                 } else {
                     $symlinks{$abs_target} = $file;
                 }
             }
-        }
+        } # CHECK_SYMLINK_TARGET
 
-        my $filesize = -s $file;
-        if ($filesize > 5*1024*1024) {
-            push @errors, {file=>$file, message=>"File size too large (>5M)"};
-        }
+      CHECK_SIZE: {
+            my $filesize = -s $file;
+            if ($filesize > 5*1024*1024) {
+                push @errors, {file=>$file, message=>"File size too large (>5M)"};
+            }
+        } # CHECK_SIZE
+
+      CHECK_TYPE_AND_EXTENSION: {
+            # because File::MimeInfo::Magic will report mime='inode/symlink' for symlink
+            my $realfile = -l $file ? readlink($file) : $file;
+            my $mime_type = File::MimeInfo::Magic::mimetype($realfile);
+            if ($mime_type eq 'image/jpeg') {
+                push @errors, {file=>$file, message=>"File type is JPEG but extension is not jpg/jpeg"}
+                    unless $file =~ /\.(jpe?g)$/i;
+            } elsif ($mime_type eq 'application/pdf') {
+                push @errors, {file=>$file, message=>"File type is PDF but extension is not pdf"}
+                    unless $file =~ /\.(pdf)$/i;
+            } else {
+                push @errors, {file=>$file, message=>"File type is not JPEG or PDF"};
+            }
+
+        } # CHECK_TYPE_AND_EXTENSION
+
     }
 
     #use DD; dd \%symlinks;
