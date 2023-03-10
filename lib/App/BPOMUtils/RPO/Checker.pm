@@ -18,6 +18,14 @@ our @EXPORT_OK = qw(
 
 our %SPEC;
 
+our %argspec0plus_filenames = (
+    filenames => {
+        schema => ['array*', of=>'filename', 'x.perl.default_value_rules' => [['Path::filenames'=>{recursive=>1}]]],
+        pos => 0,
+        slurpy => 1,
+    },
+);
+
 $SPEC{':package'} = {
     v => 1.1,
     summary => 'Various checker utilities to help with Processed Food Registration (RPO - Registrasi Pangan Olahan) at BPOM',
@@ -39,15 +47,12 @@ Here's what it checks:
 
 _
     args => {
-        files => {
-            schema => ['array*', of=>'filename', 'x.perl.default_value_rules' => [['Path::filenames']]],
-            pos => 0,
-            slurpy => 1,
-        },
+        %argspec0plus_filenames,
     },
 };
 sub bpom_rpo_check_files {
     require Cwd;
+    require File::Basename;
     require File::MimeInfo::Magic;
 
     my %args = @_;
@@ -145,11 +150,7 @@ Here's what it checks:
 
 _
     args => {
-        files => {
-            schema => ['array*', of=>'filename', 'x.perl.default_value_rules' => [['Path::filenames']]],
-            pos => 0,
-            slurpy => 1,
-        },
+        %argspec0plus_filenames,
     },
 };
 sub bpom_rpo_check_files_label_design {
