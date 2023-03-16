@@ -120,11 +120,15 @@ sub bpom_rpo_check_files {
             if ($mime_type eq 'image/jpeg') {
                 push @errors, {file=>$filename, message=>"File type is JPEG but extension is not jpg/jpeg"}
                     unless $filename =~ /\.(jpe?g)$/i;
+            } elsif ($mime_type eq 'image/gif') {
+                push @errors, {file=>$filename, message=>"File type is GIF but extension is not gif"}
+            } elsif ($mime_type eq 'image/x-ms-bmp') {
+                push @errors, {file=>$filename, message=>"File type is BMP but extension is not bmp"}
+                    unless $filename =~ /\.(bmp)$/i;
             } elsif ($mime_type eq 'application/pdf') {
                 push @errors, {file=>$filename, message=>"File type is PDF but extension is not pdf"}
-                    unless $filename =~ /\.(pdf)$/i;
             } else {
-                push @errors, {file=>$filename, message=>"File type is not JPEG or PDF"};
+                push @errors, {file=>$filename, message=>"File type is not JPEG/GIF/BMP/PDF"};
             }
 
         } # CHECK_TYPE_AND_EXTENSION
