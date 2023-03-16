@@ -127,6 +127,7 @@ sub bpom_rpo_check_files {
                     unless $filename =~ /\.(bmp)$/i;
             } elsif ($mime_type eq 'application/pdf') {
                 push @errors, {file=>$filename, message=>"File type is PDF but extension is not pdf"}
+                    unless $filename =~ /\.(pdf)$/i;
             } else {
                 push @errors, {file=>$filename, message=>"File type is not JPEG/GIF/BMP/PDF"};
             }
