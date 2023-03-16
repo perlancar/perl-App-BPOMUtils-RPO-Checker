@@ -155,6 +155,7 @@ _
     },
 };
 sub bpom_rpo_check_files_label_design {
+    require File::Basename;
     require File::MimeInfo::Magic;
     require Image::Size;
 
@@ -174,19 +175,14 @@ sub bpom_rpo_check_files_label_design {
     for my $filename (@{ $args{filenames} }) {
         $i++;
         log_info "[%d/%d] Processing file %s ...", $i, scalar(@{ $args{filenames} }), $filename;
+        my ($basename, $dirname, undef) = File::Basename::fileparse($filename);
         unless (-f $filename) {
             push @errors, {file=>$filename, message=>"File not found or not a regular file"};
             next;
         }
 
-        unless ($filename =~ /\.jpe?g\z/i) {
+        unless ($basename =~ /\.jpe?g\z/i) {
             push @errors, {file=>$filename, message=>"Filename does not end in .JPG or .JPEG"};
-        }
-        if ($filename =~ /\.[^.]+\./) {
-            push @errors, {file=>$filename, message=>"Filename contains multiple dots, currently uploadable but not viewable in ereg-rba"};
-        }
-        if ($filename =~ /[^A-Za-z0-9 _.-]/) {
-            push @warnings, {file=>$filename, message=>"Filename contains symbols, should be avoided to ensure viewable in ereg-rba"};
         }
         next unless -r $filename;
 
