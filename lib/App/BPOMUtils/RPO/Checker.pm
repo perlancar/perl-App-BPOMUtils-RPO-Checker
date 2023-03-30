@@ -20,7 +20,7 @@ our %SPEC;
 
 our %argspec0plus_filenames = (
     filenames => {
-        schema => ['array*', of=>'filename', 'x.perl.default_value_rules' => [['Path::filenames'=>{recursive=>1}]]],
+        schema => ['array*', of=>'filename', 'x.perl.default_value_rules' => [['Path::filenames'=>{recurse=>1}]]],
         pos => 0,
         slurpy => 1,
     },
